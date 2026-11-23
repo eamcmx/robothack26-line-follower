@@ -1,0 +1,61 @@
+# the line follower check on line_follower.py, Autodesk Fusion 2706.1.17
+  ok   the script has build()
+  build() said: Line follower v1: 68 parts, 20 screws, 14 nuts, robot 435 g; chassis underside z=28.0, spacers 10.0, bracket drop 15.4; materials as Fusion gave them: Aluminum, Steel, ABS Plastic, Rubber, FR4, Brass, Rubber, Silicone
+  ok   every named component exists
+  ok   one body each
+  ok   at least 20 screws and 14 nuts: 20 screws, 14 nuts
+  material of Chassis: Aluminum
+  material of Motor bracket L: Steel
+  material of Tyre L: Rubber
+  material of Wheel L: ABS Plastic
+  material of Ball: Steel
+  material of Sensor board: FR4
+  material of Standoff 1: Brass
+  material of Cell 1: Aluminum
+  material of Screw 1: Steel
+  ok   no part inside another, but the pairs the prompt allows
+  ok   Tyre L touches the ground: lowest point 0.000 mm
+  ok   Tyre R touches the ground: lowest point 0.000 mm
+  ok   Ball touches the ground: lowest point 0.000 mm
+  ok   sensors 4 mm above the ground: ['4.00', '4.00', '4.00', '4.00', '4.00']
+  ok   a revolute joint "Wheel L turns"
+  ok   driving "Wheel L turns" turns the wheel and its tyre (at 90 deg: 1.00, 1.00) and the chassis stays (moved 0.000 mm)
+  ok   robot mass 435.3 g, between 300 and 700 g
+ALL PASS
+
+# What the model said at the end
+The script is at `work/line_follower.py`, and the check printed ALL PASS on its second run. The first run stopped because the library has no material called "Silicone"; the script now takes the closest match, "Rubber, Silicone". The robot weighs 435 g, there are no interferences except the allowed pairs, the tyres and ball sit at z = 0.000, the sensors at 4.00, and driving "Wheel L turns" leaves the chassis in place.
+
+Decisions the prompt did not make:
+
+**Placement**
+- **Axes:** the chassis is centred at x = 0, y = 0, and the wheel axle is at x = 20.
+- **Front arc:** it has a radius of 100, centred at the chassis centre. That follows from the bulge of 20 over a width of 120.
+- **Caster:** at x = −65.
+- **Sensor bar:** centred at x = 90.
+- **Battery holder:** x from −55 to −14, with the cells running along y.
+- **Controller carrier:** centred at x = 22. The standoffs are 4 in from its edges.
+- **Line and board:** the line starts 10 behind the sensor bar's centre, at x = 80, and turns left. The board runs from x = −180 to 420 and y = −150 to 250.
+
+**Parts the prompt left open**
+- **Motor brackets:** the strap runs across the gearbox top and goes on past both sides as two 10 mm feet. The legs come down the gearbox sides.
+- **Motor:** the can is coaxial with the shaft. The shaft's flat faces up, there is a 1 mm gap between the gearbox face and the boss, and the shaft ends 3 mm into the hub. The whole motor is Steel.
+- **Hub:** the D-bore runs through the whole hub. The set screw sits at the top of the boss's middle and has a 1.5 hex socket, 1.5 deep.
+- **Tread grooves:** shifted by half a pitch, so solid tread touches the ground, not a groove.
+- **Caster housing:** it is 15 tall and reaches 1.75 below the ball's centre, so it holds the ball in. The ball has 0.1 clearance in its cavity. That makes the spacers 10 long and the caster screws 20, the longest standard size.
+- **Sensor brackets are Z-shaped, not L-shaped.** An L cannot join the chassis underside to a flat board. The bottom flange lies on the board, at y = ±34. Each board screw has a nut and a lock nut, because the prompt's parts give only 12 nuts and the acceptance asks for 14.
+- **Battery holder:** the floor is 1.5 thick, the cavities are open at the top, and the nuts sit in hex pockets between the cells.
+- **Countersunk screws:** given a 2 mm hex socket.
+- **Standoff screws:** 6 long, both above and below.
+- **Arduino Nano:** it sits on its header pins, 8 above the carrier, and the USB block faces backwards. The Nano is FR4.
+
+**Materials and colours**
+- The line is "Rubber, Silicone", the library's closest name to Silicone.
+- The test board is white ABS Plastic.
+- The cells have a blue wrap.
+- All fasteners are Steel.
+
+**Joints and messages**
+- The line is fixed rigidly to the test board.
+- The wheel joint sits on a sketch point at the hub's centre and turns about Y.
+- `run()` prints the message instead of opening a message box, so a check that calls it cannot hang.

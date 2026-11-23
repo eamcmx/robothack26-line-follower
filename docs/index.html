@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Prompt checker for Claude and Fusion · RobotHack '26</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Paste a prompt for a Fusion design; see which of the five parts it has and what it leaves the model to guess.">
+<style>
+:root{--paper:#f2eee3;--paper2:#e9e3d4;--ink:#1b1f24;--ink2:#4a4f57;--faint:#8a8576;--model:#1c5fb8;--judge:#c2410c;--ok:#2b7a3d;--no:#c92a2a;--warn:#a86400;
+  --lt:'Bahnschrift','DIN Alternate','Segoe UI',Arial,sans-serif;--mono:Consolas,'Cascadia Mono','Courier New',monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.5 var(--lt)}
+body{background-image:linear-gradient(rgba(40,70,100,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(40,70,100,.07) 1px,transparent 1px);background-size:20px 20px}
+main{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
+.kicker{font:600 13px var(--lt);letter-spacing:3px;text-transform:uppercase;color:var(--judge);margin:0 0 6px}
+h1{font:700 40px/1.05 var(--lt);margin:0 0 10px}
+h2{font:700 22px var(--lt);margin:0 0 10px}
+p.lead{color:var(--ink2);max-width:760px;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:rgba(255,255,255,.75);border:2px solid var(--ink);padding:16px 18px}
+textarea{width:100%;min-height:420px;resize:vertical;border:1.5px solid var(--ink2);background:#fff;font:14px/1.45 var(--mono);padding:12px;color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+button{font:600 15px var(--lt);padding:8px 14px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+button.main{background:var(--ink);color:var(--paper)}
+.score{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.score b{font:700 54px/1 var(--lt)}
+.score span{color:var(--ink2)}
+.bar{height:10px;background:var(--paper2);border:1px solid var(--ink2);margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--ok);width:0}
+ul.checks{list-style:none;margin:0;padding:0}
+ul.checks li{padding:9px 0 9px 30px;border-bottom:1px solid rgba(27,31,36,.18);position:relative}
+ul.checks li::before{content:"";position:absolute;left:4px;top:15px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--faint)}
+ul.checks li.pass::before{border-color:var(--ok);background:var(--ok)}
+ul.checks li.fail::before{border-color:var(--no)}
+ul.checks li.warn::before{border-color:var(--warn)}
+ul.checks li b{display:block;font-weight:700}
+ul.checks li small{display:block;color:var(--ink2);font-size:14px;margin-top:2px}
+ul.checks li.fail b{color:var(--no)}ul.checks li.warn b{color:var(--warn)}
+.vague{margin-top:12px;font-size:14px;color:var(--ink2)}
+.vague code{background:#fff3c4;padding:0 3px}
+footer{margin-top:28px;color:var(--ink2);font-size:14px}
+a{color:var(--model)}
+</style>
+</head>
+<body>
+<main>
+<p class="kicker">RobotHack '26 · Claude and Autodesk Fusion</p>
+<h1>Prompt checker</h1>
+<p class="lead">Paste the prompt you will give a language model to write a Fusion script. The page checks it against the five parts of a prompt that works (inputs, derived values, hard constraints, Fusion conventions, acceptance) and the habits that decided today's runs. It reads your words only. Nothing is sent anywhere, and no model is asked.</p>
+<div class="grid">
+  <section class="panel">
+    <h2>Your prompt</h2>
+    <textarea id="p" spellcheck="false" placeholder="Write a Fusion Python script that, when run, builds ..."></textarea>
+    <div class="row">
+      <button class="main" id="go">Check it</button>
+      <button id="bad">Load a bad prompt</button>
+      <button id="good">Load the line-follower prompt</button>
+      <button id="tpl">Start from the five-part template</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>What it says, and what it leaves out</h2>
+    <div class="score"><b id="sc">–</b><span id="sct">Paste a prompt and press Check it.</span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <ul class="checks" id="out"></ul>
+    <div class="vague" id="vg"></div>
+  </section>
+</div>
+<footer>Prompts, checks and results: <a href="https://github.com/eamcmx/robothack26-line-follower">github.com/eamcmx/robothack26-line-follower</a>. The method is the one of the book <i>Mechanical Design in Autodesk Fusion with Claude</i> by Prof. Emmanuel A. Merchán-Cruz, Transport and Telecommunication Institute, Riga. A checker of words cannot tell whether a design is right: only Fusion, measuring what was built, can. Use both.</footer>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var BAD='Make me a line follower robot in Fusion.';
+var TPL=['Write a Fusion Python script that, when run, builds ... in a new design.','',
+'INPUTS (constants at the top of the script, in mm unless said; x forwards, y left, z up):','- part 1: sizes, material, colour','- part 2: ...','',
+'DERIVED (computed in the script, never typed):','- ... = ... (say what each value follows from)','',
+'HARD CONSTRAINTS:','- No part may be inside another, except ...','- ... touches the ground at z = 0 within 0.1','- refuse ... with a message if ...','',
+'FUSION CONVENTIONS:','- Create a new Fusion design document (FusionDesignDocumentType). The API works in cm and radians: convert.',
+'- One component per part, named: ...','- Join with AsBuiltJoints: revolute "... turns" about ...; everything else rigid; ... grounded.',
+'- The script has run(context) and a function build() that builds everything and returns a one-line message.','',
+'ACCEPTANCE (the check prints ok or FAIL for each):','- every named component exists, one body each','- Fusion\'s interference finds nothing except ...',
+'- ... at z = 0 within 0.1','- driving "... turns" by 90 degrees turns ... by ...','- the mass between ... and ... g','',
+'Tell me every decision you made that this prompt did not.'].join('\n');
+var GOOD=null;
+fetch('LineFollower_full.txt').then(function(r){return r.ok?r.text():null;}).then(function(t){GOOD=t;}).catch(function(){});
+
+/* each test: what it looks for, why it matters (from the runs of 23 November 2026), the fix */
+var T=[
+ {id:'inputs',w:12,name:'1 · Inputs: the parts and their sizes',
+  test:function(s,n){return /\binputs?\b/i.test(s)&&n.nums>=8;},
+  ok:'Sizes are given for the parts.',
+  why:'"Make me a gear pair" left every size to the model: it chose module 2.5 and a centre distance of its own.',
+  fix:'Add an INPUTS part: every part, every size, in mm.'},
+ {id:'units',w:6,name:'Units stated',
+  test:function(s){return /\bmm\b|millimet/i.test(s);},
+  ok:'Lengths have units.', why:'Without units the model guesses.', fix:'Say "in mm" once, at the top of the inputs.'},
+ {id:'materials',w:6,name:'Materials named',
+  test:function(s){return /alumin|steel|abs\b|plastic|brass|rubber|silicone|pla\b|nylon|fr-?4|wood|titanium|copper/i.test(s);},
+  ok:'Materials are named.', why:'Asked without them, the model made a 3 kg robot car of solid steel.', fix:'Name a material for each part, as Fusion calls it (Aluminum, Steel, ABS Plastic, Brass).'},
+ {id:'derived',w:12,name:'2 · Derived values, never typed',
+  test:function(s){return /\bderived\b|worked out|computed|never typed|follows? from/i.test(s);},
+  ok:'Some values are to be worked out, not typed.', why:'A number typed twice can disagree with itself; a derived one cannot.',
+  fix:'Add a DERIVED part: what follows from what (an axle height from the wheel radius, a centre distance from the teeth).'},
+ {id:'constraints',w:12,name:'3 · Hard constraints: what must never happen',
+  test:function(s){return /hard constraints?|must not|may not|never\b|no part (may|can) be inside|refuse/i.test(s);},
+  ok:'It says what must never happen.', why:'With sizes only, the model put the motors inside the plate and said "Built the car."',
+  fix:'Add HARD CONSTRAINTS: no part inside another, what touches the ground, what must be refused and why.'},
+ {id:'refuse',w:4,name:'Impossible inputs refused',
+  test:function(s){return /refus|reject|raise an error|show a message if|fewer than/i.test(s);},
+  ok:'It says what to refuse.', why:'12 teeth were built without a word, though below 18 at 20° the teeth undercut.',
+  fix:'Say which inputs cannot work and that the script must refuse them with a message.'},
+ {id:'conventions',w:12,name:'4 · Fusion conventions',
+  test:function(s){return /fusion conventions?|new (fusion )?design|component|asbuilt|as-built|joint/i.test(s);},
+  ok:'It tells the model how Fusion must be used.', why:'Left to itself the model put all bodies in the root, with no parts to weigh.',
+  fix:'Add FUSION CONVENTIONS: a new design document, one component per part, named, joined with As-built joints.'},
+ {id:'cm',w:8,name:'cm and radians',
+  test:function(s){return /\bcm\b|centimet/i.test(s)&&/radian/i.test(s);},
+  ok:'It warns that the API works in cm and radians.', why:'Without it, a 60 mm gear pair came out 1,560 mm across: millimetres typed where Fusion wants centimetres.',
+  fix:'Add: "The API works in cm and radians: convert every input."'},
+ {id:'names',w:6,name:'Every part and joint named',
+  test:function(s){return /named|called|names?:/i.test(s)&&/"[^"]{2,40}"|,\s*[A-Z][a-z]+ [0-9LR]/.test(s);},
+  ok:'Parts and joints have names.', why:'The check looked for a joint called "Gear 1 turns". The prompt never said so: 9 checks passed, then it stopped, five times in a row.',
+  fix:'Name every part and every joint the check will look up.'},
+ {id:'moving',w:4,name:'How it moves',
+  test:function(s){return !/wheel|gear|arm|joint|link|crank|motor|hinge/i.test(s)||/revolute|slider|joint|motion link|turns/i.test(s);},
+  ok:'Moving parts have joints, or nothing moves.', why:'A gear pair without joints cannot be turned, so nobody can check that it meshes.',
+  fix:'Say which joints: revolute "Wheel L turns" about the shaft axis, and what drives what.'},
+ {id:'acceptance',w:12,name:'5 · Acceptance: how we will know it worked',
+  test:function(s,n){return /acceptance|check(s|ed)? (that|for)|prints? ok|ok or fail|must (pass|measure)/i.test(s)&&n.measurable>=2;},
+  ok:'It says what will be measured, with numbers.', why:'Fusion\'s clash check passed a gear pair with no teeth at all: it only measured what it was asked to.',
+  fix:'Add ACCEPTANCE: what Fusion will measure, each with a number and a tolerance ("at z = 0 within 0.1", "turns gear 2 by 45°").'},
+ {id:'build',w:4,name:'A build() the check can call',
+  test:function(s){return /build\(\)/.test(s);},
+  ok:'The script exposes build().', why:'A script that only opens a dialog cannot be run by a check without a person clicking.',
+  fix:'Ask for run(context) and a function build() that builds everything and returns a one-line message.'},
+ {id:'decisions',w:4,name:'"Tell me every decision you made"',
+  test:function(s){return /decision|assumption|what you (chose|decided)/i.test(s);},
+  ok:'It asks the model to report what it decided alone.', why:'A good prompt still has holes. One run solved a contradiction in silence; asked, the line follower listed four decisions.',
+  fix:'End with: "Tell me every decision you made that this prompt did not."'}
+];
+var VAGUE=/\b(nice|cool|good|simple|small|big|large|some|about|roughly|approximately|etc\.?|and so on|whatever|something|stuff|like a|kind of|sort of|appropriate|suitable|reasonable)\b/gi;
+
+function stats(s){var nums=(s.match(/\b\d+(\.\d+)?\b/g)||[]).length;
+  var lines=s.split(/\n/);var measurable=0;
+  lines.forEach(function(l){if(/\d/.test(l)&&/(within|between|at least|at most|=|≤|≥|<|>|exactly|by \d|turns? .* by)/i.test(l))measurable++;});
+  return {nums:nums,measurable:measurable,words:(s.match(/\S+/g)||[]).length};}
+
+function esc(t){return t.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+function check(){var s=$('p').value;var n=stats(s);var got=0,tot=0;var html='';
+  if(!s.trim()){$('sc').textContent='–';$('sct').textContent='Paste a prompt and press Check it.';$('out').innerHTML='';$('vg').innerHTML='';$('bar').style.width='0';return;}
+  T.forEach(function(t){tot+=t.w;var p=t.test(s,n);if(p)got+=t.w;
+    html+='<li class="'+(p?'pass':(t.w>=8?'fail':'warn'))+'"><b>'+esc(t.name)+'</b><small>'+esc(p?t.ok:(t.why+' '+t.fix))+'</small></li>';});
+  var pc=Math.round(100*got/tot);
+  $('sc').textContent=pc+'%';
+  $('sct').textContent=pc>=85?'Ready to try. Then let Fusion judge what comes back.':pc>=55?'Close. Fill the red lines first.':'The model will have to guess most of the design.';
+  $('bar').style.width=pc+'%';$('bar').style.background=pc>=85?'var(--ok)':pc>=55?'var(--warn)':'var(--no)';
+  $('out').innerHTML=html;
+  var v=(s.match(VAGUE)||[]);var uniq={};v.forEach(function(w){uniq[w.toLowerCase()]=1;});var vk=Object.keys(uniq);
+  $('vg').innerHTML=(n.words?('<b>'+n.words+'</b> words, <b>'+n.nums+'</b> numbers, <b>'+n.measurable+'</b> lines with a number to check against. '):'')+
+    (vk.length?('Words a model cannot measure: '+vk.map(function(w){return '<code>'+esc(w)+'</code>';}).join(' ')+'. Replace each with a number.'):'');}
+$('go').onclick=check;
+$('bad').onclick=function(){$('p').value=BAD;check();};
+$('tpl').onclick=function(){$('p').value=TPL;check();};
+$('good').onclick=function(){if(GOOD){$('p').value=GOOD;check();}else{fetch('LineFollower_full.txt').then(function(r){return r.text();}).then(function(t){GOOD=t;$('p').value=t;check();});}};
+$('p').addEventListener('input',function(){clearTimeout(check.t);check.t=setTimeout(check,400);});
+})();
+</script>
+</body>
+</html>

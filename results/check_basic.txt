@@ -1,0 +1,31 @@
+# the line follower check on line_follower.py, Autodesk Fusion 2706.1.17
+  ok   the script has build()
+  build() said: Line-follower robot built: chassis, two drive wheels with tyres, ball caster, 5-sensor bar, controller, battery pack, and a test board with a straight-then-curved black line; Wheel L/R turns are revolute, everything else rigid.
+  ok   every named component exists
+  ok   one body each
+  material of Chassis: Aluminum
+  material of Tyre L: Rubber
+  material of Wheel L: ABS Plastic
+  material of Ball: Steel
+  material of Sensor board: FR4
+  material of Cell 1: Aluminum
+  ok   no part inside another, but shafts in bores and cells in the holder
+  ok   Tyre L touches the ground: lowest point 0.000 mm
+  ok   Tyre R touches the ground: lowest point 0.000 mm
+  ok   Ball touches the ground: lowest point 0.000 mm
+  ok   sensors 4 mm above the ground: ['4.00', '4.00', '4.00', '4.00', '4.00']
+  ok   a revolute joint "Wheel L turns"
+  ok   driving "Wheel L turns" turns the wheel (at 90 deg its axis moved 1.00) and the chassis stays (moved 0.000 mm)
+  ok   robot mass 404.5 g, between 250 and 600 g
+ALL PASS
+
+# What the model said at the end
+Good, concrete feedback. Fixing the method name.
+
+Front ball caster at x=+78 (15 mm behind the bulge tip, not the nominal flat edge; this keeps it clear of the sensor bar).
+
+Gearbox block's two unspecified side dimensions: assigned 10 mm (x, width) and 12 mm (z, height) rather than 12/10, so its height matches the motor can's diameter (12). Otherwise the round can pokes 1 mm into the chassis.
+
+Boards: tried `FR-4`/`FR4` first, fell back to ABS Plastic; Fusion gave `FR4`.
+
+Revolute axis for each wheel: a sketch point on an XY-parallel offset plane at axle height, using `YAxisJointDirection`. A cylindrical-face-based joint geometry (`createByCylinderOrConeFace`) built but silently produced a non-moving joint, so I used the point+direction approach instead.

@@ -1,0 +1,78 @@
+Write a Fusion Python script that, when run, builds a complete two-wheel line-follower robot as a real assembly:
+every part that would be bought or made, every screw and nut that holds them together, every hole those screws pass
+through. It stands on a test board with a black line, ready to drive with Drive Joints.
+
+INPUTS (constants at the top of the script, in mm unless said; x forwards, y left, z up):
+- chassis: aluminium plate 3 thick, 160 long and 120 wide; rear corners rounded R 10; the front edge one arc through
+  the two front corners that bulges 20 forwards; every edge of the outline chamfered 0.5
+- gear motors (N20 type), two: a gearbox block 12 (along y) x 10 (along x) x 10 (z), a motor can of diameter 12 with
+  two flats 10 apart (top and bottom), 15 long, behind the gearbox along y, and a D-shaft of diameter 3, 10 long, with
+  a 0.5 deep flat, coming out of the gearbox face, pointing outwards along y
+- motor brackets, two: a steel strap 1.5 thick and 10 wide (along y), bent into a U that hugs the gearbox's top and
+  sides and ends in two feet that lie flat against the chassis underside; each foot screwed to the chassis with one M3
+  socket head cap screw from above and an M3 hex nut below the foot
+- wheels, two: a white plastic hub of diameter 34 and width 16, with 6 round lightening holes of diameter 7 on a circle
+  of diameter 21, a boss of diameter 10 and 6 long on its inner face with a D-bore for the shaft, and an M3 set screw
+  (grub screw, 4 long) in the boss, radial, bearing on the shaft's flat; a black rubber tyre, outer diameter 43, inner
+  34, width 19, with 24 tread grooves 1.5 wide and 1 deep across its tread
+- ball caster: a steel ball of diameter 9.5 held in a black plastic housing (a cylinder of diameter 14 open at the
+  bottom) with a flange 30 x 10 x 2 carrying two holes for M3 screws 22 apart; between the flange and the chassis, two
+  aluminium round spacers (outer 6, bore 3.2) as long as needed; two M3 cap screws from above through the chassis and
+  spacers, an M3 hex nut under the flange on each
+- sensor bar: a green circuit board 72 x 14 x 1.6 carrying 5 reflective sensors (TCRT5000, each a black block
+  10.2 x 5.8 x 7) spaced 14 along y, facing the ground; the board held by two aluminium L-brackets (1.5 thick, 10
+  wide), each screwed to the chassis underside with one M3 screw and nut, and to the board with one M3 screw and nut
+- controller: a blue circuit board 60 x 40 x 1.6 (an Arduino Nano carrier) with an Arduino Nano on it (45 x 18 x 1.6
+  board, a USB socket block 8 x 7.5 x 4 at its rear end, two rows of 15 header pins of 0.64 square, 2.54 pitch, 8
+  tall); the carrier on four brass hex standoffs M3, 10 long, 5.5 across the flats; one M3 cap screw into each
+  standoff from above the carrier and one from below the chassis
+- battery: a black holder 77 x 41 x 20 for two 18650 cells (each diameter 18, length 65, as two bodies, modelled in
+  Aluminum: a real cell weighs about 46 g), fixed with two M3 countersunk screws from below through the chassis and an
+  M3 nut on each inside the holder
+- fasteners, drawn as they are bought: M3 socket head cap screw (ISO 4762): head diameter 5.5, head height 3, a
+  hexagon socket 2.5 across the flats and 1.5 deep, shank diameter 3; M3 countersunk screw (ISO 10642): head diameter
+  6, 90 degrees; M3 hex nut (ISO 4032): 5.5 across the flats, 2.4 thick, bore 3; every screw length a standard one
+  (6, 8, 10, 12, 16, 20) chosen so that at least 1 thread pitch (0.5) shows past its nut
+- holes: every screw passes through a clearance hole of diameter 3.4 in every plate, foot, flange and board it crosses
+- test board: white, 600 x 400 x 5, its top face is the ground, z = 0; a black line 19 wide, set 0.5 deep into it
+  (cut the groove, fill it with the line): a straight 200 long, then a quarter circle of radius 120
+
+DERIVED (computed in the script, never typed):
+- wheel axle height = tyre radius
+- chassis underside height = axle height + half the gearbox height + the bracket's 1.5 (the bracket sits between)
+- the caster spacers' length, so that the ball touches the ground
+- the sensor brackets' drop, so that the sensors' bottom faces are 4 above the ground
+- the wheels' y position: the tyre's inner face 3 clear of the chassis side; the shaft long enough to reach through
+  the hub's boss
+- each screw's length, as stated above
+
+HARD CONSTRAINTS:
+- No part may be inside another, except: each motor's shaft in its wheel's D-bore, each set screw against its flat,
+  the cells in their holder's cavities, and screws in standoffs or nuts (their bores are 3, the screws 3).
+- Both tyres and the ball touch the ground at z = 0 within 0.1. Nothing else goes below z = 0 except the test board.
+- The robot stands at the start of the black line, its sensor bar centred over it.
+- Every material set and printed back as Fusion gave it: Aluminum, Steel, Brass, ABS Plastic, Rubber, Silicone, and
+  FR4 for the boards if it exists. Colour every part as described ("Fusion Appearance Library").
+
+FUSION CONVENTIONS:
+- Create a new Fusion design document (FusionDesignDocumentType). The API works in cm and radians: convert.
+- One component per part, named: Chassis, Motor L, Motor R, Motor bracket L, Motor bracket R, Wheel L, Wheel R,
+  Tyre L, Tyre R, Ball, Caster housing, Caster spacer 1, Caster spacer 2, Sensor board, Sensor 1 ... Sensor 5,
+  Sensor bracket L, Sensor bracket R, Carrier, Arduino Nano, Standoff 1 ... Standoff 4, Battery holder, Cell 1,
+  Cell 2, Test board, Line; every screw "Screw 1", "Screw 2", ...; every nut "Nut 1", "Nut 2", ...; the set screws
+  "Set screw L" and "Set screw R".
+- Build each part in its place, then join with AsBuiltJoints: revolute "Wheel L turns" and "Wheel R turns" about each
+  motor shaft's axis (hub, tyre and set screw move together: tyre and set screw rigid to the hub), everything else
+  rigid to the chassis; the chassis and the test board grounded.
+- The script has run(context) and a function build() that builds everything and returns a one-line message; run()
+  calls build() and shows the message.
+
+ACCEPTANCE (the check prints ok or FAIL for each):
+- every named component exists, one body each (the cells' holder may have its cavities)
+- at least 20 screws and 14 nuts
+- Fusion's interference finds nothing except the pairs allowed above; a screw through a plate without its hole is a FAIL
+- lowest points: both tyres and the ball at z = 0 within 0.1; the sensors' bottoms at z = 4 within 0.2
+- driving "Wheel L turns" by 360 degrees turns the left wheel with its tyre, and the chassis does not move
+- the robot's mass, test board and line left out, between 300 and 700 g
+
+Tell me every decision you made that this prompt did not.

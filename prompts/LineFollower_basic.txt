@@ -1,0 +1,57 @@
+Write a Fusion Python script that, when run, builds a complete two-wheel line-follower robot in a new design, ready to
+drive with Drive Joints, standing on a test board with a black line.
+
+INPUTS (constants at the top of the script, in mm unless said):
+- chassis: aluminium plate 3 thick, 150 long (x, forwards is +x) and 110 wide (y); the rear corners rounded R 12, the
+  front edge one arc through the two front corners that bulges 18 forwards; two slots 22 x 8 for the wheels' motors
+- drive: two gear motors, each a gearbox block 12 x 10 x 24 (long side along y) on a motor can of diameter 12, length
+  15, coaxial behind it; output shaft diameter 3, length 10, pointing outwards along y
+- wheels: diameter 43, width 19; a white plastic hub (diameter 36) with 6 round lightening holes of diameter 7 on a
+  circle of diameter 22, and a black rubber tyre (outer 43, inner 36) as a separate body
+- front support: a steel ball of diameter 12 in a housing (a cylinder of diameter 16, its bottom open), under the
+  chassis, 15 behind the front edge
+- sensor bar: a green circuit board 72 x 14 x 1.6 under the chassis front, carrying 5 reflective sensors, each a black
+  block 10 x 6 x 7, spaced 14 along y, facing the ground
+- controller: a blue circuit board 45 x 18 x 1.6 (an Arduino Nano) on four brass standoffs, diameter 5, height 10, on
+  top of the chassis
+- battery: a black holder 77 x 41 x 20 for two 18650 cells (each diameter 18, length 65, as two bodies), on top of the
+  chassis behind the controller
+- test board: white, 600 x 400 x 5, its top face is the ground, z = 0; a black line 19 wide, set 0.5 deep into it so its
+  top is flush with the board (cut the groove, fill it with the line): a straight 200 long, then a quarter circle of
+  radius 120
+- cells: model them in Aluminum (a real 18650 weighs about 46 g)
+
+DERIVED (computed in the script, never typed):
+- wheel axle height = wheel radius
+- chassis underside height = axle height + half the gearbox height (the gearbox hangs from the chassis underside)
+- the ball housing's length, from the chassis underside down to the top of the ball, with the ball touching z = 0
+- the sensor board's height so that the sensors' bottom faces are 4 above the ground
+- the wheels' y position: their inner face 3 clear of the chassis side
+
+HARD CONSTRAINTS:
+- No part may be inside another, except the motor shaft inside its wheel's bore (make the bore 3.2) and the cells
+  inside their holder's two cavities (cut the cavities).
+- Both wheels and the ball touch the ground at z = 0 within 0.1. Nothing else goes below z = 0 except the test board.
+- The robot stands at the start of the black line, its sensor bar centred over it.
+- Every material set and printed back as Fusion gave it: Aluminum, ABS Plastic, Rubber, Silicone, Steel, Brass, and the
+  boards as FR-4 if it exists, else ABS Plastic. Colour every part as described with appearances from the
+  "Fusion Appearance Library" (for example "Paint - Enamel Glossy (Black)").
+
+FUSION CONVENTIONS:
+- Create a new Fusion design document (FusionDesignDocumentType). The API works in cm and radians: convert.
+- One component per part, named: Chassis, Motor L, Motor R, Wheel L, Wheel R, Tyre L, Tyre R, Ball housing, Ball,
+  Sensor board, Sensor 1 ... Sensor 5, Controller, Standoff 1 ... Standoff 4, Battery holder, Cell 1, Cell 2,
+  Test board, Line.
+- Build each part in its place, then join with AsBuiltJoints: revolute "Wheel L turns" and "Wheel R turns" about each
+  motor shaft axis (tyres rigid to their hubs), the rest rigid to the chassis; the test board grounded.
+- The script has run(context) and also a function build() that builds everything and returns a one-line message; run()
+  calls build() and shows the message.
+
+ACCEPTANCE (the check prints ok or FAIL for each):
+- every named component exists, with one body each
+- Fusion's interference finds nothing except shafts in bores and cells in the holder
+- lowest points: both tyres and the ball at z = 0 within 0.1; sensors' bottoms at z = 4 within 0.2
+- driving "Wheel L turns" by 360 degrees turns the left wheel, and the chassis does not move
+- the total mass printed, robot without test board between 250 and 600 g
+
+Tell me every decision you made that this prompt did not.
