@@ -39,7 +39,8 @@ parts it has and what it leaves the model to guess.
   not have; corrected, the second run passed all 12 lines, 10 min 26 s after the prompt: 68 parts, 20 screws, 14 nuts,
   435 g.
 
-Both scripts and their check reports are in `results/`, as the models wrote them.
+Both scripts and their check reports are in `results/`, as the models wrote them, with a film of Fusion building the
+full robot from its script, step by step (`results/line_follower_full_built_by_fusion.mp4`).
 
 Before trusting any of it, measure: the model can say "built" when parts sit inside each other, or "involute gears"
 when there are no teeth at all. The check, run in Fusion, is the judge.
