@@ -56,3 +56,15 @@ From the book *Mechanical Design in Autodesk Fusion with Claude*:
 5. **Acceptance**: what will be measured, each with a number and a tolerance.
 
 And a last line: *tell me every decision you made that this prompt did not.*
+
+## The book
+
+![The three volumes of Mechanical Design in Autodesk Fusion with Claude](docs/img/book-covers.webp)
+
+*Mechanical Design in Autodesk Fusion with Claude*, by Emmanuel A. Merchán-Cruz, in three volumes:
+
+- Volume 1: Machine Elements, Gears and Mechanisms
+- Volume 2: Machines and Robots
+- Volume 3: Detailed Design, Validation and Drawings
+
+Coming soon on Amazon. The machines shown in the master class, and the method behind these prompts, are from it.
